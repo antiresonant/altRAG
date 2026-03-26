@@ -79,6 +79,27 @@ class TestScan:
             assert 'server' in r.stdout
 
 
+class TestTree:
+    def test_tree_generates_html(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            md = os.path.join(tmp, 'test.md')
+            with open(md, 'w') as f:
+                f.write("# Title\n\n## Section\n\nBody.\n")
+            out = os.path.join(tmp, 'tree.html')
+            r = _run('tree', md, '-o', out, '--no-open')
+            assert r.returncode == 0
+            assert os.path.isfile(out)
+            with open(out, encoding='utf-8') as f:
+                html = f.read()
+            assert 'Title' in html
+            assert 'Section' in html
+
+    def test_tree_no_files_exits_nonzero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = _run('tree', os.path.join(tmp, 'nonexistent'), '--no-open')
+            assert r.returncode != 0
+
+
 class TestSetup:
     def test_setup_end_to_end(self):
         with tempfile.TemporaryDirectory() as tmp:

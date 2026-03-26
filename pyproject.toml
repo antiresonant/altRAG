@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "altrag"
-version = "0.1.0"
+version = "0.1.1"
 description = "Pointer-based skill retrieval for LLM agents. Alternative to vector DB RAG."
 readme = "README.md"
 license = "MIT"
@@ -29,8 +29,8 @@ include = ["altrag*"]
 altrag = "altrag.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/anthropics/altrag"
-Issues = "https://github.com/anthropics/altrag/issues"
+Homepage = "https://github.com/antiresonant/altRAG"
+Issues = "https://github.com/antiresonant/altRAG/issues"
 
 [tool.setuptools.package-data]
 altrag = ["template.html"]

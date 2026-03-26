@@ -58,17 +58,24 @@ def detect_format(path: str) -> str:
     return 'md'
 
 
+def _strip_bom(raw: bytes) -> bytes:
+    """Strip UTF-8 BOM if present (common on Windows editors)."""
+    if raw.startswith(b'\xef\xbb\xbf'):
+        return raw[3:]
+    return raw
+
+
 def scan_md(path: str) -> list[dict]:
     """Scan a Markdown file and return list of section dicts."""
     with open(path, 'rb') as f:
-        raw = f.read()
+        raw = _strip_bom(f.read())
 
     file_size = len(raw)
     lines_raw = raw.split(b'\n')
     start_idx = skip_front_matter(lines_raw)
 
     sections = []
-    in_code = False
+    fence_char = None  # tracks whether we're inside ``` or ~~~
     anchor = 0
 
     offsets = []
@@ -83,9 +90,13 @@ def scan_md(path: str) -> list[dict]:
         byte_off = offsets[idx]
 
         if line.startswith('```') or line.startswith('~~~'):
-            in_code = not in_code
+            marker = line[:3]
+            if fence_char is None:
+                fence_char = marker
+            elif marker == fence_char:
+                fence_char = None
             continue
-        if in_code:
+        if fence_char is not None:
             continue
 
         if line.startswith('#'):
@@ -125,7 +136,7 @@ def scan_md(path: str) -> list[dict]:
 def scan_yaml(path: str) -> list[dict]:
     """Scan a YAML file using indentation depth as heading levels."""
     with open(path, 'rb') as f:
-        raw = f.read()
+        raw = _strip_bom(f.read())
 
     file_size = len(raw)
     lines_raw = raw.split(b'\n')
@@ -253,7 +264,7 @@ def emit_skt(file_data: list[tuple[str, list[dict]]]) -> str:
         "# Files are grouped under @ headers.",
     ]
     for path, sections in file_data:
-        lines.append(f"\n@ {path}")
+        lines.append(f"\n@ {path.replace(chr(92), '/')}")
         for s in sections:
             title = s['title'].replace('\t', ' ').replace('\n', ' ').replace('\r', ' ')
             lines.append(f"{s['depth']}\t{s['offset']}\t{s['length']}\t{s['line']}\t{s['line_count']}\t{title}")

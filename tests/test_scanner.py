@@ -13,6 +13,13 @@ def _write_tmp(content: str, suffix: str = '.md') -> str:
     return path
 
 
+def _write_tmp_bytes(content: bytes, suffix: str = '.md') -> str:
+    fd, path = tempfile.mkstemp(suffix=suffix)
+    with os.fdopen(fd, 'wb') as f:
+        f.write(content)
+    return path
+
+
 SAMPLE_MD = """\
 # Top Level
 
@@ -129,6 +136,39 @@ class TestScanMd:
         finally:
             os.unlink(path)
 
+    def test_bom_stripped(self):
+        """UTF-8 BOM should not prevent first heading detection."""
+        bom = b'\xef\xbb\xbf'
+        path = _write_tmp_bytes(bom + b"# Title\n\n## Section\n")
+        try:
+            sections = scan_md(path)
+            assert len(sections) == 2
+            assert sections[0]['title'] == 'Title'
+        finally:
+            os.unlink(path)
+
+    def test_crlf_line_endings(self):
+        """Windows CRLF files should scan correctly."""
+        path = _write_tmp_bytes(b"# Top\r\n\r\n## Sub\r\nContent.\r\n")
+        try:
+            sections = scan_md(path)
+            assert len(sections) == 2
+            assert sections[0]['title'] == 'Top'
+            assert sections[1]['title'] == 'Sub'
+        finally:
+            os.unlink(path)
+
+    def test_fence_type_mismatch(self):
+        """Opening with ``` and closing with ~~~ should NOT toggle code mode."""
+        content = "# Real\n\n```\n# Hidden\n~~~\n\n# Also Hidden\n\n```\n\n## After Code\n"
+        path = _write_tmp(content)
+        try:
+            sections = scan_md(path)
+            titles = [s['title'] for s in sections]
+            assert titles == ['Real', 'After Code']
+        finally:
+            os.unlink(path)
+
 
 class TestScanYaml:
     def test_basic_keys(self):
@@ -162,7 +202,7 @@ class TestEmitSkt:
             file_data = [(path, sections)]
             skt = emit_skt(file_data)
             assert skt.startswith('# altRAG Pointer Skeleton')
-            assert f'@ {path}' in skt
+            assert f'@ {path.replace(chr(92), "/")}' in skt
             # each section line should have 6 tab-separated columns
             data_lines = [l for l in skt.split('\n') if l and not l.startswith('#') and not l.startswith('@') and not l.startswith('\n')]
             for line in data_lines:

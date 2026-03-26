@@ -205,7 +205,10 @@ def cmd_setup(args):
         print("altrag: template.html not found, skipping HTML generation", file=sys.stderr)
 
     # 5. add directive to agent config files
-    directive = ALTRAG_DIRECTIVE.format(skt_path=skt_path, skills_dir=skills_dir)
+    directive = ALTRAG_DIRECTIVE.format(
+        skt_path=skt_path.replace('\\', '/'),
+        skills_dir=skills_dir.replace('\\', '/'),
+    )
 
     # every known agent instruction file
     agent_files = [
@@ -272,17 +275,17 @@ def cmd_setup(args):
             if 'altRAG' in existing or 'altrag' in existing:
                 print(f"altrag: pre-commit hook already configured")
             else:
-                # append to existing hook
-                with open(hook_path, 'a', encoding='utf-8') as f:
-                    f.write('\n' + hook_content)
+                # append to existing hook (binary mode to preserve LF on Windows)
+                with open(hook_path, 'ab') as f:
+                    f.write(('\n' + hook_content).encode('utf-8'))
                 print(f"altrag: appended to existing pre-commit hook")
         else:
-            with open(hook_path, 'w', encoding='utf-8') as f:
-                f.write(hook_content)
+            with open(hook_path, 'wb') as f:
+                f.write(hook_content.encode('utf-8'))
             os.chmod(hook_path, 0o755)
             print(f"altrag: installed pre-commit hook")
 
-    print(f"\naltrag: ready. Your agent can now read {skt_path} for surgical skill retrieval.")
+    print(f"\naltrag: ready. Your agent can now read {skt_path.replace(chr(92), '/')} for surgical skill retrieval.")
 
 
 def main():
