@@ -44,10 +44,9 @@ header{display:flex;justify-content:space-between;align-items:center;
 .btn:hover{color:var(--tx);border-color:var(--tx)}
 .btn-theme{font-size:13px;padding:2px 6px;line-height:1}
 
-#tree-panel{overflow:auto;height:calc(100vh - 41px);padding:24px 24px 160px;
-  min-width:min-content}
+#tree-panel{overflow:auto;height:calc(100vh - 41px);padding:24px 24px 160px}
 
-.file-sec{margin-bottom:100px}
+.file-sec{margin-bottom:100px;overflow-x:auto}
 .file-lbl{font-size:12px;font-weight:800;color:var(--ac);text-transform:uppercase;
   letter-spacing:1.5px;text-align:center;margin-bottom:12px;
   text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
@@ -58,7 +57,7 @@ header{display:flex;justify-content:space-between;align-items:center;
 
 /* ══════ VERTICAL TREE ══════ */
 .vt,.vt ul{list-style:none;margin:0;padding:0}
-.vt{display:inline-flex;justify-content:center;min-width:100%}
+.vt{display:flex;justify-content:center}
 .vt ul{display:flex;justify-content:center;padding-top:24px;position:relative}
 /* vertical stem from parent node down to children row */
 .vt ul::before{content:'';position:absolute;top:0;left:50%;height:24px;border-left:2px solid var(--ln)}
