@@ -1,4 +1,4 @@
-<!-- <p align="center"><img src="assets/banner.png" alt="altRAG" width="100%"></p> -->
+<p align="center"><img src="assets/banner.png" alt="altRAG" width="100%"></p>
 
 <h1 align="center">altRAG</h1>
 <p align="center"><strong>Pointer-based skill retrieval for LLM agents.</strong><br>The alternative to vector DB RAG.</p>
@@ -97,7 +97,7 @@ The skeleton stays fresh through two mechanisms:
 
 `altrag tree` generates a self-contained HTML file showing your skill architecture as a vertical tree diagram. Click to expand/collapse. Search. Filter by file. Dark/light theme. No server needed — just a local HTML file.
 
-<!-- <p align="center"><img src="assets/tree-screenshot.png" alt="HUMAN.html" width="80%"></p> -->
+<p align="center"><img src="assets/tree-screenshot.png" alt="altRAG Interactive Skill Tree" width="90%"></p>
 
 ## Architecture
 
