@@ -1,0 +1,33 @@
+# generated
+*.skt
+HUMAN.html
+output/
+
+# compiled
+scan
+scan.exe
+*.o
+*.obj
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# tcc binaries
+tools/tcc/tcc
+tools/tcc/tcc.exe
+tools/tcc/lib/
+tools/tcc/include/
+
+# os
+.DS_Store
+Thumbs.db
+
+# ide/session
+.claude/
+.vscode/
+.idea/

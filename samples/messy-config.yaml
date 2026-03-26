@@ -1,0 +1,76 @@
+# Infrastructure Configuration
+# This file has no markdown headings — tests dynamic format handling
+
+deployment:
+  strategy: rolling
+  replicas: 3
+  image: myorg/platform:latest
+  health_check:
+    endpoint: /health
+    interval: 30s
+    timeout: 5s
+    failure_threshold: 3
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    DATABASE_URL: postgres://db:5432/platform
+    REDIS_URL: redis://cache:6379
+    LOG_LEVEL: info
+
+networking:
+  service:
+    type: ClusterIP
+    port: 8080
+    target_port: 8080
+  ingress:
+    host: api.platform.io
+    tls: true
+    cert_manager: letsencrypt-prod
+    rate_limit:
+      requests_per_second: 100
+      burst: 200
+
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+    path: /metrics
+    scrape_interval: 15s
+  alerts:
+    high_cpu:
+      threshold: 80
+      duration: 5m
+      severity: warning
+    high_memory:
+      threshold: 90
+      duration: 2m
+      severity: critical
+    error_rate:
+      threshold: 5
+      duration: 1m
+      severity: critical
+
+scaling:
+  horizontal:
+    min_replicas: 2
+    max_replicas: 10
+    target_cpu: 70
+    target_memory: 80
+    scale_down_delay: 300s
+  vertical:
+    enabled: false
+    update_mode: "Off"
+
+secrets:
+  provider: vault
+  path: secret/data/platform
+  keys:
+    - DATABASE_PASSWORD
+    - API_SECRET_KEY
+    - JWT_PRIVATE_KEY
+    - WEBHOOK_SIGNING_SECRET

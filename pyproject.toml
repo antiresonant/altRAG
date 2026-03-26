@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "altrag"
+version = "0.1.0"
+description = "Pointer-based skill retrieval for LLM agents. Alternative to vector DB RAG."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+keywords = ["llm", "rag", "skills", "agents", "pointers", "retrieval"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+]
+
+[tool.setuptools.packages.find]
+include = ["altrag*"]
+
+[project.scripts]
+altrag = "altrag.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/anthropics/altrag"
+Issues = "https://github.com/anthropics/altrag/issues"
+
+[tool.setuptools.package-data]
+altrag = ["template.html", "scan.c"]
