@@ -1,7 +1,7 @@
 <p align="center"><img src="assets/banner.png" alt="altRAG" width="100%"></p>
 
 <h1 align="center">altRAG</h1>
-<p align="center"><strong>Pointer-based skill retrieval for LLM agents.</strong><br>The alternative to vector DB RAG.</p>
+<p align="center"><strong>Pointer-based skill retrieval for LLM agents.</strong><br>Don't use vector DB RAG for everything, use altRAG. We use pointers instead of embeddings</p>
 
 <p align="center">
   <a href="https://pypi.org/project/altrag/"><img src="https://img.shields.io/pypi/v/altrag?style=flat-square&color=black" alt="PyPI"></a>
