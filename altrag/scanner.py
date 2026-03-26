@@ -5,9 +5,20 @@ Scans skill files (Markdown, YAML) and extracts a hierarchical pointer tree
 mapping byte offsets and line numbers to structural headings.
 """
 
+import importlib.resources
 import json
 import os
 import sys
+import warnings
+
+
+def _decode_line(raw: bytes, path: str, line_num: int) -> str:
+    """Decode a line as UTF-8, warning on encoding issues instead of silently replacing."""
+    try:
+        return raw.decode('utf-8')
+    except UnicodeDecodeError:
+        warnings.warn(f"{path}:{line_num}: invalid UTF-8 bytes, replaced with U+FFFD", stacklevel=2)
+        return raw.decode('utf-8', errors='replace')
 
 
 def is_hrule(line: str) -> bool:
@@ -67,7 +78,7 @@ def scan_md(path: str) -> list[dict]:
         off += len(lr) + 1
 
     for idx in range(start_idx, len(lines_raw)):
-        line = lines_raw[idx].decode('utf-8', errors='replace').rstrip('\r')
+        line = _decode_line(lines_raw[idx], path, idx + 1).rstrip('\r')
         line_num = idx + 1
         byte_off = offsets[idx]
 
@@ -134,7 +145,7 @@ def scan_yaml(path: str) -> list[dict]:
         off += len(lr) + 1
 
     for idx in range(start_idx, len(lines_raw)):
-        line = lines_raw[idx].decode('utf-8', errors='replace').rstrip('\r')
+        line = _decode_line(lines_raw[idx], path, idx + 1).rstrip('\r')
         line_num = idx + 1
         byte_off = offsets[idx]
 
@@ -149,6 +160,13 @@ def scan_yaml(path: str) -> list[dict]:
         if not indent_found and spaces > 0:
             indent_unit = spaces
             indent_found = True
+
+        if indent_found and spaces > 0 and spaces % indent_unit != 0:
+            warnings.warn(
+                f"{path}:{line_num}: indentation ({spaces} spaces) is not a multiple "
+                f"of the base indent ({indent_unit} spaces)",
+                stacklevel=2,
+            )
 
         colon_pos = stripped.find(':')
         if colon_pos > 0:
@@ -166,16 +184,22 @@ def scan_yaml(path: str) -> list[dict]:
 
 
 def _calc_bounds(sections, file_size, total_lines):
+    """Calculate byte length and line count for each section.
+
+    total_lines is len(raw.split(b'\\n')), which includes a trailing empty
+    element when the file ends with \\n.  We use total_lines (not +1) as the
+    sentinel so line_count reflects actual content lines.
+    """
     for i, sec in enumerate(sections):
         end_off = file_size
-        end_ln = total_lines + 1
+        end_ln = total_lines
         for j in range(i + 1, len(sections)):
             if sections[j]['depth'] <= sec['depth']:
                 end_off = sections[j]['offset']
                 end_ln = sections[j]['line']
                 break
         sec['length'] = end_off - sec['offset']
-        sec['line_count'] = end_ln - sec['line']
+        sec['line_count'] = max(1, end_ln - sec['line'])
 
 
 def scan(path: str, fmt: str = 'auto') -> list[dict]:
@@ -193,6 +217,9 @@ def scan_many(paths: list[str], fmt: str = 'auto') -> list[tuple[str, list[dict]
             sections = scan(path, fmt)
             if sections:
                 results.append((path, sections))
+                print(f"  {path}: {len(sections)} sections", file=sys.stderr)
+            else:
+                print(f"  {path}: 0 sections (no headings found)", file=sys.stderr)
         except Exception as e:
             print(f"altrag: error processing {path}: {e}", file=sys.stderr)
     return results
@@ -228,7 +255,8 @@ def emit_skt(file_data: list[tuple[str, list[dict]]]) -> str:
     for path, sections in file_data:
         lines.append(f"\n@ {path}")
         for s in sections:
-            lines.append(f"{s['depth']}\t{s['offset']}\t{s['length']}\t{s['line']}\t{s['line_count']}\t{s['title']}")
+            title = s['title'].replace('\t', ' ').replace('\n', ' ').replace('\r', ' ')
+            lines.append(f"{s['depth']}\t{s['offset']}\t{s['length']}\t{s['line']}\t{s['line_count']}\t{title}")
     return '\n'.join(lines) + '\n'
 
 
@@ -243,19 +271,12 @@ def generate_html(file_data: list[tuple[str, list[dict]]]) -> str:
 
     tj = json.dumps(tree_data, ensure_ascii=False)
 
-    # find template.html
-    candidates = [
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template.html'),
-        os.path.join(os.getcwd(), 'template.html'),
-    ]
-    t = None
-    for p in candidates:
-        if os.path.isfile(p):
-            with open(p, 'r', encoding='utf-8') as f:
-                t = f.read()
-            break
-    if t is None:
-        raise FileNotFoundError("template.html not found next to altrag package or in cwd")
+    # load template.html via importlib.resources (works with installed packages and zips)
+    try:
+        ref = importlib.resources.files('altrag').joinpath('template.html')
+        t = ref.read_text(encoding='utf-8')
+    except (FileNotFoundError, TypeError):
+        raise FileNotFoundError("template.html not found in altrag package")
 
     return (t
         .replace('__TREE_JSON__', tj)

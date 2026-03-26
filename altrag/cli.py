@@ -132,11 +132,11 @@ PRE_COMMIT_HOOK = '''#!/usr/bin/env bash
 SKILLS_DIR="{skills_dir}"
 SKT_PATH="{skt_path}"
 
-changed=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\\.(md|markdown|yaml|yml)$' | grep -v README | grep -v CHANGELOG || true)
+changed=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\\.(md|markdown|yaml|yml)$' | grep -Ev '^(README|CHANGELOG)\\.md$' || true)
 if [ -n "$changed" ]; then
     if command -v altrag &>/dev/null; then
-        altrag scan "$SKILLS_DIR" -o "$SKT_PATH" 2>/dev/null
-        git add "$SKT_PATH" 2>/dev/null
+        altrag scan "$SKILLS_DIR" -o "$SKT_PATH"
+        git add "$SKT_PATH"
     fi
 fi
 '''
@@ -289,6 +289,14 @@ def main():
     parser = argparse.ArgumentParser(
         prog='altrag',
         description='Pointer-based skill retrieval for LLM agents. Alternative to RAG.',
+        epilog=(
+            'examples:\n'
+            '  altrag setup                 Auto-detect skills, scan, generate tree\n'
+            '  altrag scan docs/ -o docs/skills.skt\n'
+            '  altrag tree skills/          Open interactive HTML viewer\n'
+            '  altrag init                  Create example skill files\n'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = parser.add_subparsers(dest='command')
 

@@ -13,6 +13,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLATFORM="$(uname -s)"
 ARCH="$(uname -m)"
 
+# Use $TMPDIR (macOS/Linux), $TEMP (Windows/MSYS), or /tmp as fallback
+WORK_DIR="${TMPDIR:-${TEMP:-/tmp}}"
+
+cleanup() {
+    rm -f "$WORK_DIR/tcc.tar.gz" "$WORK_DIR/tcc.zip" 2>/dev/null || true
+}
+trap cleanup EXIT
+
 echo "[altRAG] Fetching TCC for $PLATFORM-$ARCH..."
 
 case "$PLATFORM" in
@@ -24,9 +32,8 @@ case "$PLATFORM" in
         fi
         TCC_URL="https://download.savannah.gnu.org/releases/tinycc/tcc-0.9.27-linux-x86_64-bin.tar.gz"
         echo "Downloading: $TCC_URL"
-        curl -fSL "$TCC_URL" -o /tmp/tcc.tar.gz
-        tar -xzf /tmp/tcc.tar.gz -C "$SCRIPT_DIR" --strip-components=1
-        rm /tmp/tcc.tar.gz
+        curl -fSL "$TCC_URL" -o "$WORK_DIR/tcc.tar.gz"
+        tar -xzf "$WORK_DIR/tcc.tar.gz" -C "$SCRIPT_DIR" --strip-components=1
         chmod +x "$SCRIPT_DIR/tcc"
         echo "[altRAG] TCC installed: $SCRIPT_DIR/tcc"
         ;;
@@ -34,9 +41,8 @@ case "$PLATFORM" in
     MINGW*|MSYS*|CYGWIN*)
         TCC_URL="https://download.savannah.gnu.org/releases/tinycc/tcc-0.9.27-win64-bin.zip"
         echo "Downloading: $TCC_URL"
-        curl -fSL "$TCC_URL" -o /tmp/tcc.zip
-        unzip -o /tmp/tcc.zip -d "$SCRIPT_DIR"
-        rm /tmp/tcc.zip
+        curl -fSL "$TCC_URL" -o "$WORK_DIR/tcc.zip"
+        unzip -o "$WORK_DIR/tcc.zip" -d "$SCRIPT_DIR"
         echo "[altRAG] TCC installed: $SCRIPT_DIR/tcc.exe"
         ;;
 
